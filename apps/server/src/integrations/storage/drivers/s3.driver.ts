@@ -150,6 +150,44 @@ export class S3Driver implements StorageDriver {
     }
   }
 
+  async deleteByPrefix(prefix: string): Promise<void> {
+    try {
+      const { ListObjectsV2Command, DeleteObjectsCommand } = require('@aws-sdk/client-s3');
+      const { ListObjectsV2CommandOutput } = require('@aws-sdk/client-s3');
+
+      // List all objects with the prefix
+      const listCommand = new ListObjectsV2Command({
+        Bucket: this.config.bucket,
+        Prefix: prefix
+      });
+
+      const listedObjects = await this.s3Client.send(listCommand) as typeof ListObjectsV2CommandOutput;
+
+      if (!listedObjects.Contents || listedObjects.Contents.length === 0) {
+        return;
+      }
+
+      // Delete all listed objects
+      const deleteCommand = new DeleteObjectsCommand({
+        Bucket: this.config.bucket,
+        Delete: {
+          Objects: listedObjects.Contents.map(({ Key }) => ({ Key }))
+        }
+      });
+
+      await this.s3Client.send(deleteCommand);
+
+      // If there are more objects to delete (S3 returns max 1000 at a time)
+      if (listedObjects.IsTruncated) {
+        await this.deleteByPrefix(prefix);
+      }
+    } catch (err) {
+      throw new Error(
+        `Error deleting files with prefix ${prefix} from S3. ${(err as Error).message}`,
+      );
+    }
+  }
+
   getDriver(): S3Client {
     return this.s3Client;
   }

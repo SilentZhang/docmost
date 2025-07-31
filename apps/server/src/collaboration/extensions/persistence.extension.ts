@@ -14,9 +14,7 @@ import { InjectKysely } from 'nestjs-kysely';
 import { KyselyDB } from '@docmost/db/types/kysely.types';
 import { executeTx } from '@docmost/db/utils';
 import { EventEmitter2 } from '@nestjs/event-emitter';
-import { InjectQueue } from '@nestjs/bullmq';
-import { QueueJob, QueueName } from '../../integrations/queue/constants';
-import { Queue } from 'bullmq';
+import { QueueJob } from '../../integrations/queue/constants';
 import {
   extractMentions,
   extractPageMentions,
@@ -34,7 +32,6 @@ export class PersistenceExtension implements Extension {
     private readonly pageRepo: PageRepo,
     @InjectKysely() private readonly db: KyselyDB,
     private eventEmitter: EventEmitter2,
-    @InjectQueue(QueueName.GENERAL_QUEUE) private generalQueue: Queue,
   ) {}
 
   async onLoadDocument(data: onLoadDocumentPayload) {
@@ -163,7 +160,7 @@ export class PersistenceExtension implements Extension {
       const mentions = extractMentions(tiptapJson);
       const pageMentions = extractPageMentions(mentions);
 
-      await this.generalQueue.add(QueueJob.PAGE_BACKLINKS, {
+      this.eventEmitter.emit(QueueJob.PAGE_BACKLINKS, {
         pageId: pageId,
         workspaceId: page.workspaceId,
         mentions: pageMentions,

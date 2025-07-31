@@ -49,13 +49,6 @@ export class EnvironmentService {
     return parseInt(this.configService.get<string>('DATABASE_MAX_POOL', '10'));
   }
 
-  getRedisUrl(): string {
-    return this.configService.get<string>(
-      'REDIS_URL',
-      'redis://localhost:6379',
-    );
-  }
-
   getJwtTokenExpiresIn(): string {
     return this.configService.get<string>('JWT_TOKEN_EXPIRES_IN', '90d');
   }
@@ -190,13 +183,6 @@ export class EnvironmentService {
 
   getCollabUrl(): string {
     return this.configService.get<string>('COLLAB_URL');
-  }
-
-  isCollabDisableRedis(): boolean {
-    const isStandalone = this.configService
-      .get<string>('COLLAB_DISABLE_REDIS', 'false')
-      .toLowerCase();
-    return isStandalone === 'true';
   }
 
   isDisableTelemetry(): boolean {

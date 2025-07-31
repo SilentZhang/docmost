@@ -24,9 +24,7 @@ import { nanoIdGen } from '../../../common/helpers';
 import { PaginationOptions } from '@docmost/db/pagination/pagination-options';
 import { executeWithPagination } from '@docmost/db/pagination/pagination';
 import { DomainService } from 'src/integrations/environment/domain.service';
-import { InjectQueue } from '@nestjs/bullmq';
-import { QueueJob, QueueName } from '../../../integrations/queue/constants';
-import { Queue } from 'bullmq';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { EnvironmentService } from '../../../integrations/environment/environment.service';
 import {
   validateAllowedEmail,
@@ -43,8 +41,8 @@ export class WorkspaceInvitationService {
     private domainService: DomainService,
     private tokenService: TokenService,
     @InjectKysely() private readonly db: KyselyDB,
-    @InjectQueue(QueueName.BILLING_QUEUE) private billingQueue: Queue,
     private readonly environmentService: EnvironmentService,
+    private eventEmitter: EventEmitter2,
   ) {}
 
   async getInvitations(workspaceId: string, pagination: PaginationOptions) {
@@ -276,7 +274,7 @@ export class WorkspaceInvitationService {
         invitedUserEmail: newUser.email,
       });
 
-      await this.mailService.sendToQueue({
+      await this.mailService.sendEmail({
         to: invitedByUser.email,
         subject: `${newUser.name} has accepted your Docmost invite`,
         template: emailTemplate,
@@ -284,8 +282,8 @@ export class WorkspaceInvitationService {
     }
 
     if (this.environmentService.isCloud()) {
-      await this.billingQueue.add(QueueJob.STRIPE_SEATS_SYNC, {
-        workspaceId: workspace.id,
+      this.eventEmitter.emit('billing.stripe-seats-sync', {
+        workspaceId: workspace.id
       });
     }
 
@@ -370,7 +368,7 @@ export class WorkspaceInvitationService {
       inviteLink,
     });
 
-    await this.mailService.sendToQueue({
+    await this.mailService.sendEmail({
       to: inviteeEmail,
       subject: `${invitedByName} invited you to Docmost`,
       template: emailTemplate,

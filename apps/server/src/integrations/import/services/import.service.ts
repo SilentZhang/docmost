@@ -22,9 +22,8 @@ import {
 } from '../utils/file.utils';
 import { v7 as uuid7 } from 'uuid';
 import { StorageService } from '../../storage/storage.service';
-import { InjectQueue } from '@nestjs/bullmq';
-import { Queue } from 'bullmq';
-import { QueueJob, QueueName } from '../../queue/constants';
+import { EventEmitter2 } from '@nestjs/event-emitter';
+import { QueueJob } from '../../queue/constants';
 
 @Injectable()
 export class ImportService {
@@ -34,8 +33,7 @@ export class ImportService {
     private readonly pageRepo: PageRepo,
     private readonly storageService: StorageService,
     @InjectKysely() private readonly db: KyselyDB,
-    @InjectQueue(QueueName.FILE_TASK_QUEUE)
-    private readonly fileTaskQueue: Queue,
+    private eventEmitter: EventEmitter2,
   ) {}
 
   async importPage(
@@ -231,7 +229,7 @@ export class ImportService {
       .returningAll()
       .executeTakeFirst();
 
-    await this.fileTaskQueue.add(QueueJob.IMPORT_TASK, {
+    this.eventEmitter.emit(QueueJob.IMPORT_TASK, {
       fileTaskId: fileTaskId,
     });
 

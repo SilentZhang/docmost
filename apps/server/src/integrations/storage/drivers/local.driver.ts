@@ -90,6 +90,17 @@ export class LocalDriver implements StorageDriver {
     }
   }
 
+  async deleteByPrefix(prefix: string): Promise<void> {
+    try {
+      const fullPrefix = this._fullPath(prefix);
+      if (await fs.pathExists(fullPrefix)) {
+        await fs.remove(fullPrefix);
+      }
+    } catch (err) {
+      throw new Error(`Failed to delete by prefix: ${(err as Error).message}`);
+    }
+  }
+
   getDriver(): typeof fs {
     return fs;
   }

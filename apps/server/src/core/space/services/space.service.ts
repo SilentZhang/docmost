@@ -14,9 +14,8 @@ import { executeTx } from '@docmost/db/utils';
 import { InjectKysely } from 'nestjs-kysely';
 import { SpaceMemberService } from './space-member.service';
 import { SpaceRole } from '../../../common/helpers/types/permission';
-import { QueueJob, QueueName } from 'src/integrations/queue/constants';
-import { Queue } from 'bullmq';
-import { InjectQueue } from '@nestjs/bullmq';
+import { EventEmitter2 } from '@nestjs/event-emitter';
+import { QueueJob } from 'src/integrations/queue/constants';
 
 @Injectable()
 export class SpaceService {
@@ -24,7 +23,7 @@ export class SpaceService {
     private spaceRepo: SpaceRepo,
     private spaceMemberService: SpaceMemberService,
     @InjectKysely() private readonly db: KyselyDB,
-    @InjectQueue(QueueName.ATTACHMENT_QUEUE) private attachmentQueue: Queue,
+    private eventEmitter: EventEmitter2,
   ) {}
 
   async createSpace(
@@ -146,6 +145,6 @@ export class SpaceService {
     }
 
     await this.spaceRepo.deleteSpace(spaceId, workspaceId);
-    await this.attachmentQueue.add(QueueJob.DELETE_SPACE_ATTACHMENTS, space);
+    this.eventEmitter.emit(QueueJob.DELETE_SPACE_ATTACHMENTS, space);
   }
 }

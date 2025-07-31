@@ -29,9 +29,7 @@ import { addDays } from 'date-fns';
 import { DISALLOWED_HOSTNAMES, WorkspaceStatus } from '../workspace.constants';
 import { v4 } from 'uuid';
 import { AttachmentType } from 'src/core/attachment/attachment.constants';
-import { InjectQueue } from '@nestjs/bullmq';
-import { QueueJob, QueueName } from '../../../integrations/queue/constants';
-import { Queue } from 'bullmq';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { generateRandomSuffixNumbers } from '../../../common/helpers';
 
 @Injectable()
@@ -48,8 +46,7 @@ export class WorkspaceService {
     private environmentService: EnvironmentService,
     private domainService: DomainService,
     @InjectKysely() private readonly db: KyselyDB,
-    @InjectQueue(QueueName.ATTACHMENT_QUEUE) private attachmentQueue: Queue,
-    @InjectQueue(QueueName.BILLING_QUEUE) private billingQueue: Queue,
+    private eventEmitter: EventEmitter2,
   ) {}
 
   async findById(workspaceId: string) {
@@ -214,18 +211,18 @@ export class WorkspaceService {
     if (this.environmentService.isCloud() && trialEndAt) {
       try {
         const delay = trialEndAt.getTime() - Date.now();
+        
+        setTimeout(() => {
+          this.eventEmitter.emit('billing.trial-ended', {
+            workspaceId: createdWorkspace.id
+          });
+        }, delay);
 
-        await this.billingQueue.add(
-          QueueJob.TRIAL_ENDED,
-          { workspaceId: createdWorkspace.id },
-          { delay },
-        );
-
-        await this.billingQueue.add(
-          QueueJob.WELCOME_EMAIL,
-          { userId: user.id },
-          { delay: 60 * 1000 }, // 1m
-        );
+        setTimeout(() => {
+          this.eventEmitter.emit('email.welcome', {
+            userId: user.id
+          });
+        }, 60 * 1000); // 1m
       } catch (err) {
         this.logger.error(err);
       }
@@ -476,7 +473,7 @@ export class WorkspaceService {
     });
 
     try {
-      await this.attachmentQueue.add(QueueJob.DELETE_USER_AVATARS, user);
+      this.eventEmitter.emit('attachment.delete-user-avatars', user);
     } catch (err) {
       // empty
     }

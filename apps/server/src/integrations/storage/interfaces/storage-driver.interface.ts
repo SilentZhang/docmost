@@ -18,6 +18,8 @@ export interface StorageDriver {
   getSignedUrl(filePath: string, expireIn: number): Promise<string>;
 
   delete(filePath: string): Promise<void>;
+  
+  deleteByPrefix(prefix: string): Promise<void>;
 
   getDriver(): any;
 

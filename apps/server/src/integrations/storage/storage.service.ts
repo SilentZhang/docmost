@@ -49,6 +49,11 @@ export class StorageService {
     await this.storageDriver.delete(filePath);
   }
 
+  async deleteSpaceAttachments(spaceId: string): Promise<void> {
+    const prefix = `attachments/${spaceId}/`;
+    await this.storageDriver.deleteByPrefix(prefix);
+  }
+
   getDriverName(): string {
     return this.storageDriver.getDriverName();
   }

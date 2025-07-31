@@ -112,7 +112,7 @@ export class AuthService {
     );
 
     const emailTemplate = ChangePasswordEmail({ username: user.name });
-    await this.mailService.sendToQueue({
+    await this.mailService.sendEmail({
       to: user.email,
       subject: 'Your password has been changed',
       template: emailTemplate,
@@ -149,7 +149,7 @@ export class AuthService {
       resetLink: resetLink,
     });
 
-    await this.mailService.sendToQueue({
+    await this.mailService.sendEmail({
       to: user.email,
       subject: 'Reset your password',
       template: emailTemplate,
@@ -195,7 +195,7 @@ export class AuthService {
     });
 
     const emailTemplate = ChangePasswordEmail({ username: user.name });
-    await this.mailService.sendToQueue({
+    await this.mailService.sendEmail({
       to: user.email,
       subject: 'Your password has been changed',
       template: emailTemplate,

@@ -1,3 +1,4 @@
+import * as path from 'path';
 import {
   Global,
   Logger,
@@ -7,8 +8,10 @@ import {
 } from '@nestjs/common';
 import { InjectKysely, KyselyModule } from 'nestjs-kysely';
 import { EnvironmentService } from '../integrations/environment/environment.service';
-import { CamelCasePlugin, LogEvent, PostgresDialect, sql } from 'kysely';
-import { Pool, types } from 'pg';
+import { CamelCasePlugin, LogEvent, sql, Kysely } from 'kysely';
+import { PGlite } from '@electric-sql/pglite';
+import { Dialect, Driver, QueryCompiler, DatabaseIntrospector } from 'kysely';
+import { DefaultQueryCompiler } from 'kysely';
 import { GroupRepo } from '@docmost/db/repos/group/group.repo';
 import { WorkspaceRepo } from '@docmost/db/repos/workspace/workspace.repo';
 import { UserRepo } from '@docmost/db/repos/user/user.repo';
@@ -26,9 +29,6 @@ import { UserTokenRepo } from './repos/user-token/user-token.repo';
 import { BacklinkRepo } from '@docmost/db/repos/backlink/backlink.repo';
 import { ShareRepo } from '@docmost/db/repos/share/share.repo';
 
-// https://github.com/brianc/node-postgres/issues/811
-types.setTypeParser(types.builtins.INT8, (val) => Number(val));
-
 @Global()
 @Module({
   imports: [
@@ -36,14 +36,59 @@ types.setTypeParser(types.builtins.INT8, (val) => Number(val));
       imports: [],
       inject: [EnvironmentService],
       useFactory: (environmentService: EnvironmentService) => ({
-        dialect: new PostgresDialect({
-          pool: new Pool({
-            connectionString: environmentService.getDatabaseURL(),
-            max: environmentService.getDatabaseMaxPool(),
-          }).on('error', (err) => {
-            console.error('Database error:', err.message);
-          }),
-        }),
+        dialect: {
+          createAdapter() {
+            return {
+              supportsCreateIfNotExists: false,
+              supportsTransactionalDdl: false,
+              supportsReturning: true,
+              async acquireMigrationLock() {},
+              async releaseMigrationLock() {}
+            };
+          },
+          createDriver() {
+            const dbPath = path.join(__dirname, '../../../server/data/db.sqlite');
+            const pglite = new PGlite(dbPath);
+            return {
+              async init() {},
+              async acquireConnection() {
+                return {
+                  connection: pglite,
+                  query: pglite.query.bind(pglite),
+                  execute: pglite.exec.bind(pglite),
+                  executeQuery: async <R>(query) => {
+                    const result = await pglite.query<R>(query.sql, query.parameters as any[]);
+                    return {
+                      rows: result.rows as R[],
+                      numAffectedRows: result.rows.length ? BigInt(result.rows.length) : undefined
+                    };
+                  },
+                  streamQuery: async function* <R>() {
+                    throw new Error('Streaming not supported by PGlite');
+                    yield { rows: [] as R[] }; // This line is unreachable but satisfies type checker
+                  }
+                };
+              },
+              async beginTransaction() {},
+              async commitTransaction() {},
+              async rollbackTransaction() {},
+              async releaseConnection() {},
+              async destroy() {
+                await pglite.close();
+              }
+            };
+          },
+          createQueryCompiler() {
+            return new DefaultQueryCompiler();
+          },
+          createIntrospector(db: Kysely<any>) {
+            return {
+              async getSchemas() { return []; },
+              async getTables() { return []; },
+              async getMetadata() { return null; }
+            };
+          }
+        },
         plugins: [new CamelCasePlugin()],
         log: (event: LogEvent) => {
           if (environmentService.getNodeEnv() !== 'development') return;
