@@ -15,7 +15,6 @@ import { InjectKysely } from 'nestjs-kysely';
 import { SpaceMemberService } from './space-member.service';
 import { SpaceRole } from '../../../common/helpers/types/permission';
 import { EventEmitter2 } from '@nestjs/event-emitter';
-import { QueueJob } from 'src/integrations/queue/constants';
 
 @Injectable()
 export class SpaceService {
@@ -145,6 +144,6 @@ export class SpaceService {
     }
 
     await this.spaceRepo.deleteSpace(spaceId, workspaceId);
-    this.eventEmitter.emit(QueueJob.DELETE_SPACE_ATTACHMENTS, space);
+    this.eventEmitter.emit('space.attachments.delete', space);
   }
 }

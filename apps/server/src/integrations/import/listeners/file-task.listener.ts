@@ -1,6 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { OnEvent } from '@nestjs/event-emitter';
-import { QueueJob } from '../../queue/constants';
 import { FileTaskStatus } from '../utils/file.utils';
 import { FileTaskService } from '../services/file-task.service';
 import { StorageService } from '../../storage/storage.service';
@@ -14,7 +13,7 @@ export class FileTaskListener {
     private readonly storageService: StorageService,
   ) {}
 
-  @OnEvent(QueueJob.IMPORT_TASK)
+  @OnEvent('import.task.process')
   async handleImportTask(data: { fileTaskId: string }) {
     try {
       this.logger.debug(`Processing import task ${data.fileTaskId}`);

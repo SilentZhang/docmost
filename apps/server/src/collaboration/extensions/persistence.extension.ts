@@ -14,13 +14,11 @@ import { InjectKysely } from 'nestjs-kysely';
 import { KyselyDB } from '@docmost/db/types/kysely.types';
 import { executeTx } from '@docmost/db/utils';
 import { EventEmitter2 } from '@nestjs/event-emitter';
-import { QueueJob } from '../../integrations/queue/constants';
 import {
   extractMentions,
   extractPageMentions,
 } from '../../common/helpers/prosemirror/utils';
 import { isDeepStrictEqual } from 'node:util';
-import { IPageBacklinkJob } from '../../integrations/queue/constants/queue.interface';
 import { Page } from '@docmost/db/types/entity.types';
 
 @Injectable()
@@ -160,11 +158,12 @@ export class PersistenceExtension implements Extension {
       const mentions = extractMentions(tiptapJson);
       const pageMentions = extractPageMentions(mentions);
 
-      this.eventEmitter.emit(QueueJob.PAGE_BACKLINKS, {
+      // Backlinks are now handled directly without queue
+      this.eventEmitter.emit('page.backlinks', {
         pageId: pageId,
-        workspaceId: page.workspaceId,
-        mentions: pageMentions,
-      } as IPageBacklinkJob);
+        workspaceId: page.workspaceId, 
+        mentions: pageMentions
+      });
     }
   }
 

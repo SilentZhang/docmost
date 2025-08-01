@@ -23,7 +23,6 @@ import {
 import { v7 as uuid7 } from 'uuid';
 import { StorageService } from '../../storage/storage.service';
 import { EventEmitter2 } from '@nestjs/event-emitter';
-import { QueueJob } from '../../queue/constants';
 
 @Injectable()
 export class ImportService {
@@ -229,7 +228,7 @@ export class ImportService {
       .returningAll()
       .executeTakeFirst();
 
-    this.eventEmitter.emit(QueueJob.IMPORT_TASK, {
+    this.eventEmitter.emit('import.task.process', {
       fileTaskId: fileTaskId,
     });
 

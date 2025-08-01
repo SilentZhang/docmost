@@ -8,7 +8,6 @@ import { WsModule } from './ws/ws.module';
 import { DatabaseModule } from '@docmost/db/database.module';
 import { StorageModule } from './integrations/storage/storage.module';
 import { MailModule } from './integrations/mail/mail.module';
-import { QueueModule } from './integrations/queue/queue.module';
 import { StaticModule } from './integrations/static/static.module';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { HealthModule } from './integrations/health/health.module';
@@ -38,7 +37,6 @@ try {
     EnvironmentModule,
     CollaborationModule,
     WsModule,
-    QueueModule,
     StaticModule,
     HealthModule,
     ImportModule,

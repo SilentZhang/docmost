@@ -35,9 +35,6 @@ import {
 } from '../dto/duplicate-page.dto';
 import { Node as PMNode } from '@tiptap/pm/model';
 import { StorageService } from '../../../integrations/storage/storage.service';
-import { InjectQueue } from '@nestjs/bullmq';
-import { Queue } from 'bullmq';
-import { QueueJob, QueueName } from '../../../integrations/queue/constants';
 
 @Injectable()
 export class PageService {
@@ -48,7 +45,6 @@ export class PageService {
     private attachmentRepo: AttachmentRepo,
     @InjectKysely() private readonly db: KyselyDB,
     private readonly storageService: StorageService,
-    @InjectQueue(QueueName.ATTACHMENT_QUEUE) private attachmentQueue: Queue,
   ) {}
 
   async findById(
@@ -585,26 +581,10 @@ export class PageService {
 
     const pageIds = descendants.map((d) => d.id);
 
-    // Queue attachment deletion for all pages with unique job IDs to prevent duplicates
-    for (const id of pageIds) {
-      await this.attachmentQueue.add(
-        QueueJob.DELETE_PAGE_ATTACHMENTS,
-        {
-          pageId: id,
-        },
-        {
-          jobId: `delete-page-attachments-${id}`,
-          attempts: 3,
-          backoff: {
-            type: 'exponential',
-            delay: 5000,
-          },
-        },
-      );
-    }
-
+    // Delete attachments directly since we removed queue dependency
     if (pageIds.length > 0) {
       await this.db.deleteFrom('pages').where('id', 'in', pageIds).execute();
+      await this.attachmentRepo.deleteAttachmentsByPageIds(pageIds);
     }
   }
 

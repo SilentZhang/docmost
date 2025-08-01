@@ -2,9 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { Interval } from '@nestjs/schedule';
 import { InjectKysely } from 'nestjs-kysely';
 import { KyselyDB } from '@docmost/db/types/kysely.types';
-import { InjectQueue } from '@nestjs/bullmq';
-import { Queue } from 'bullmq';
-import { QueueJob, QueueName } from '../../../integrations/queue/constants';
+import { AttachmentRepo } from '@docmost/db/repos/attachment/attachment.repo';
 
 @Injectable()
 export class TrashCleanupService {
@@ -13,7 +11,7 @@ export class TrashCleanupService {
 
   constructor(
     @InjectKysely() private readonly db: KyselyDB,
-    @InjectQueue(QueueName.ATTACHMENT_QUEUE) private attachmentQueue: Queue,
+    private readonly attachmentRepo: AttachmentRepo,
   ) {}
 
   @Interval('trash-cleanup', 24 * 60 * 60 * 1000) // every 24 hours
@@ -84,26 +82,9 @@ export class TrashCleanupService {
       `Cleaning up page ${pageId} with ${pageIds.length - 1} descendants`,
     );
 
-    // Queue attachment deletion for all pages with unique job IDs to prevent duplicates
-    for (const id of pageIds) {
-      await this.attachmentQueue.add(
-        QueueJob.DELETE_PAGE_ATTACHMENTS,
-        {
-          pageId: id,
-        },
-        {
-          jobId: `delete-page-attachments-${id}`,
-          attempts: 3,
-          backoff: {
-            type: 'exponential',
-            delay: 5000,
-          },
-        },
-      );
-    }
-
     try {
       if (pageIds.length > 0) {
+        await this.attachmentRepo.deleteAttachmentsByPageIds(pageIds);
         await this.db.deleteFrom('pages').where('id', 'in', pageIds).execute();
       }
     } catch (error) {

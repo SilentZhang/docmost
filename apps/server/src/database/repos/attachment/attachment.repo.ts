@@ -92,4 +92,15 @@ export class AttachmentRepo {
       .where('filePath', '=', attachmentFilePath)
       .executeTakeFirst();
   }
+
+  async deleteAttachmentsByPageIds(
+    pageIds: string[],
+    trx?: KyselyTransaction,
+  ): Promise<void> {
+    const db = dbOrTx(this.db, trx);
+    await db
+      .deleteFrom('attachments')
+      .where('pageId', 'in', pageIds)
+      .execute();
+  }
 }
