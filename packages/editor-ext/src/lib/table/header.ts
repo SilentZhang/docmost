@@ -2,7 +2,7 @@ import { TableHeader as TiptapTableHeader } from "@tiptap/extension-table-header
 
 export const TableHeader = TiptapTableHeader.extend({
   name: "tableHeader",
-  content: "paragraph+",
+  content: "(paragraph | heading | bulletList | orderedList | taskList | blockquote | callout | image | video | attachment | mathBlock | details | codeBlock)+",
   
   addAttributes() {
     return {
@@ -16,6 +16,19 @@ export const TableHeader = TiptapTableHeader.extend({
           }
           return {
             style: `background-color: ${attributes.backgroundColor}`,
+            'data-background-color': attributes.backgroundColor,
+          };
+        },
+      },
+      backgroundColorName: {
+        default: null,
+        parseHTML: (element) => element.getAttribute('data-background-color-name') || null,
+        renderHTML: (attributes) => {
+          if (!attributes.backgroundColorName) {
+            return {};
+          }
+          return {
+            'data-background-color-name': attributes.backgroundColorName.toLowerCase(),
           };
         },
       },
