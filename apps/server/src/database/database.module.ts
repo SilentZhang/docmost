@@ -47,7 +47,7 @@ import { ShareRepo } from '@docmost/db/repos/share/share.repo';
             };
           },
           createDriver() {
-            const dbPath = path.join(__dirname, '../../../server/data/db.sqlite');
+            const dbPath = path.join(__dirname, '../../../server/data/db.pglite');
             const pglite = new PGlite(dbPath);
             return {
               async init() {},

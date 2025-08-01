@@ -18,7 +18,7 @@ async function main() {
 
   const migrationFolder = path.join(__dirname, './migrations');
 
-  const dbPath = path.join(__dirname, '../../data/db.sqlite');
+  const dbPath = path.join(__dirname, '../../data/db.pglite');
   await fs.mkdir(path.dirname(dbPath), { recursive: true });
   const pglite = new PGlite(dbPath);
   await pglite.waitReady;

@@ -3,7 +3,7 @@ import { EnvironmentService } from '../integrations/environment/environment.serv
 import * as path from 'path';
 
 async function checkTables() {
-  const dbPath = path.join(process.cwd(), './data/db.sqlite');
+  const dbPath = path.join(process.cwd(), './data/db.pglite');
   const pglite = new PGlite(dbPath);
   await pglite.waitReady;
 
