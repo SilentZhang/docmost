@@ -57,7 +57,7 @@ export class WorkspaceInvitationService {
         eb(
           sql`email`,
           'ilike',
-          sql`f_unaccent(${'%' + pagination.query + '%'})`,
+          sql`${'%' + pagination.query + '%'}`,
         ),
       );
     }

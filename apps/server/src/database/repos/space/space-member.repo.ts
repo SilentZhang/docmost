@@ -121,19 +121,19 @@ export class SpaceMemberRepo {
     if (pagination.query) {
       query = query.where((eb) =>
         eb(
-          sql`f_unaccent(users.name)`,
+          sql`users.name`,
           'ilike',
-          sql`f_unaccent(${'%' + pagination.query + '%'})`,
+          sql`${'%' + pagination.query + '%'}`,
         )
           .or(
             sql`users.email`,
             'ilike',
-            sql`f_unaccent(${'%' + pagination.query + '%'})`,
+          sql`${'%' + pagination.query + '%'}`,
           )
           .or(
-            sql`f_unaccent(groups.name)`,
+            sql`groups.name`,
             'ilike',
-            sql`f_unaccent(${'%' + pagination.query + '%'})`,
+            sql`${'%' + pagination.query + '%'}`,
           ),
       );
     }
@@ -242,13 +242,13 @@ export class SpaceMemberRepo {
     if (pagination.query) {
       query = query.where((eb) =>
         eb(
-          sql`f_unaccent(name)`,
+          sql`name`,
           'ilike',
-          sql`f_unaccent(${'%' + pagination.query + '%'})`,
+          sql`${'%' + pagination.query + '%'}`,
         ).or(
-          sql`f_unaccent(description)`,
+          sql`description`,
           'ilike',
-          sql`f_unaccent(${'%' + pagination.query + '%'})`,
+          sql`${'%' + pagination.query + '%'}`,
         ),
       );
     }

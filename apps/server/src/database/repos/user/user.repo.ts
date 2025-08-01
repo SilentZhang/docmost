@@ -150,13 +150,13 @@ export class UserRepo {
     if (pagination.query) {
       query = query.where((eb) =>
         eb(
-          sql`f_unaccent(users.name)`,
+          sql`users.name`,
           'ilike',
-          sql`f_unaccent(${'%' + pagination.query + '%'})`,
+          sql`${'%' + pagination.query + '%'}`,
         ).or(
           sql`users.email`,
           'ilike',
-          sql`f_unaccent(${'%' + pagination.query + '%'})`,
+          sql`${'%' + pagination.query + '%'}`,
         ),
       );
     }

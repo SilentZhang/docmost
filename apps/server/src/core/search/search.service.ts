@@ -44,17 +44,17 @@ export class SearchService {
         'creatorId',
         'createdAt',
         'updatedAt',
-        sql<number>`ts_rank(tsv, to_tsquery('english', f_unaccent(${searchQuery})))`.as(
+        sql<number>`ts_rank(tsv, to_tsquery('english', ${searchQuery}))`.as(
           'rank',
         ),
-        sql<string>`ts_headline('english', text_content, to_tsquery('english', f_unaccent(${searchQuery})),'MinWords=9, MaxWords=10, MaxFragments=3')`.as(
+        sql<string>`ts_headline('english', text_content, to_tsquery('english', ${searchQuery}),'MinWords=9, MaxWords=10, MaxFragments=3')`.as(
           'highlight',
         ),
       ])
       .where(
         'tsv',
         '@@',
-        sql<string>`to_tsquery('english', f_unaccent(${searchQuery}))`,
+        sql<string>`to_tsquery('english', ${searchQuery})`,
       )
       .$if(Boolean(searchParams.creatorId), (qb) =>
         qb.where('creatorId', '=', searchParams.creatorId),
@@ -152,11 +152,11 @@ export class SearchService {
         .where((eb) =>
           eb.or([
             eb(
-              sql`LOWER(f_unaccent(users.name))`,
+              sql`LOWER(users.name)`,
               'like',
-              sql`LOWER(f_unaccent(${`%${query}%`}))`,
+              sql`LOWER(${`%${query}%`})`,
             ),
-            eb(sql`users.email`, 'ilike', sql`f_unaccent(${`%${query}%`})`),
+            eb(sql`users.email`, 'ilike', sql`${`%${query}%`}`),
           ]),
         )
         .limit(limit);
@@ -170,9 +170,9 @@ export class SearchService {
         .select(['id', 'name', 'description'])
         .where((eb) =>
           eb(
-            sql`LOWER(f_unaccent(groups.name))`,
+            sql`LOWER(groups.name)`,
             'like',
-            sql`LOWER(f_unaccent(${`%${query}%`}))`,
+            sql`LOWER(${`%${query}%`})`,
           ),
         )
         .where('workspaceId', '=', workspaceId)
@@ -186,9 +186,9 @@ export class SearchService {
         .select(['id', 'slugId', 'title', 'icon', 'spaceId'])
         .where((eb) =>
           eb(
-            sql`LOWER(f_unaccent(pages.title))`,
+            sql`LOWER(pages.title)`,
             'like',
-            sql`LOWER(f_unaccent(${`%${query}%`}))`,
+            sql`LOWER(${`%${query}%`})`,
           ),
         )
         .where('workspaceId', '=', workspaceId)

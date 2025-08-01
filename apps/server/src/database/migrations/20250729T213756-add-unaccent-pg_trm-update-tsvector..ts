@@ -1,7 +1,7 @@
 import { type Kysely, sql } from 'kysely';
 
 export async function up(db: Kysely<any>): Promise<void> {
-  // Update the pages tsvector trigger without unaccent
+    // Update the pages tsvector trigger
   await sql`
     CREATE OR REPLACE FUNCTION pages_tsvector_trigger() RETURNS trigger AS $$
     begin
